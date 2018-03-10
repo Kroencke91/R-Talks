@@ -1,3 +1,13 @@
-#Tidy Stock Analysis
-##tidyquant
+---
+title: "Tidy Stock Analysis"
+author: "Douglas Kroencke"
+highlighter: highlight.js
+hitheme: tomorrow
+job: Kansas City R Users Group, 7 April 2018
+mode: selfcontained
+subtitle: tidyquant
+framework: io2012
+widgets: mathjax
+---
+
 Use this package to analyze stocks in a tidy manner based on the quantmod package. 
