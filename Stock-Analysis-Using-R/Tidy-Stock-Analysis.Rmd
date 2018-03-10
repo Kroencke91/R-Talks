@@ -1,0 +1,3 @@
+#Tidy Stock Analysis
+##tidyquant
+Use this package to analyze stocks in a tidy manner based on the quantmod package. 
