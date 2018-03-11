@@ -1,13 +1,27 @@
 ---
-title: "Tidy Stock Analysis"
+title: "Tidy Stock Analysis Using R"
 author: "Douglas Kroencke"
-highlighter: highlight.js
+date: "April 7, 2018"
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
 hitheme: tomorrow
 job: Kansas City R Users Group, 7 April 2018
 mode: selfcontained
-subtitle: tidyquant
+highlighter: highlight.js
+subtitle: Kansas City R Users Group
 framework: io2012
 widgets: mathjax
 ---
+<center>
+![](tidyquant.png)
+</center>
+# Synopsis
+Stock market analysis is fun and potentially profitable. This presentation will use the package __tidyquant__ created by Matt Dancho^[1](https://cran.r-project.org/package=tidyquant)^. From the tidyquant documentation^[2](https://cran.r-project.org/web/packages/tidyquant/vignettes/TQ00-introduction-to-tidyquant.html)^, "All tidyquant functions return data in the tibble (tidy data frame) format, which allows for interaction within the tidyverse. ... The tidyquant package includes charting tools to assist users in developing quick visualizations in ggplot2 using the grammar of graphics format and workflow. ... Asset and portfolio performance analysis is a deep field with a wide range of theories and methods for analyzing risk versus reward." Source code is available on GitHub^[3](https://github.com/business-science/tidyquant)^. The tidyquant website^[4](https://business-science.github.io/tidyquant/)^ is another good source of information.  
 
-Use this package to analyze stocks in a tidy manner based on the quantmod package. 
+# References
+__1__ [tidyquant: Tidy Quantitative Financial Analysis](https://cran.r-project.org/package=tidyquant)  
+__2__ [Introduction to tidyquant by Matt Dancho](https://cran.r-project.org/web/packages/tidyquant/vignettes/TQ00-introduction-to-tidyquant.html)  
+__3__ [GitHub (source code)](https://github.com/business-science/tidyquant)  
+__4__ [tidyquant (website)](https://business-science.github.io/tidyquant/)  
