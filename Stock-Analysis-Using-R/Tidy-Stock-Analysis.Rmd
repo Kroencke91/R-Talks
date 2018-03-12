@@ -3,7 +3,7 @@ title: "Tidy Stock Analysis Using R"
 author: "Douglas Kroencke"
 date: "April 7, 2018"
 output:
-  html_document:
+  html_document: 
     df_print: paged
   pdf_document: default
 hitheme: tomorrow
@@ -18,10 +18,355 @@ widgets: mathjax
 ![](tidyquant.png)
 </center>
 # Synopsis
-Stock market analysis is fun and potentially profitable. This presentation will use the package __tidyquant__ created by Matt Dancho^[1](https://cran.r-project.org/package=tidyquant)^. From the tidyquant documentation^[2](https://cran.r-project.org/web/packages/tidyquant/vignettes/TQ00-introduction-to-tidyquant.html)^, "All tidyquant functions return data in the tibble (tidy data frame) format, which allows for interaction within the tidyverse. ... The tidyquant package includes charting tools to assist users in developing quick visualizations in ggplot2 using the grammar of graphics format and workflow. ... Asset and portfolio performance analysis is a deep field with a wide range of theories and methods for analyzing risk versus reward." Source code is available on GitHub^[3](https://github.com/business-science/tidyquant)^. The tidyquant website^[4](https://business-science.github.io/tidyquant/)^ is another good source of information.  
+Stock market analysis is fun and potentially profitable. This presentation will use the package __tidyquant__ created by Matt Dancho^[__1__](https://cran.r-project.org/package=tidyquant)^. From the tidyquant documentation^[__2__](https://cran.r-project.org/web/packages/tidyquant/vignettes/TQ00-introduction-to-tidyquant.html)^, "All tidyquant functions return data in the tibble (tidy data frame) format, which allows for interaction within the tidyverse. ... The tidyquant package includes charting tools to assist users in developing quick visualizations in ggplot2 using the grammar of graphics format and workflow." Source code is available on GitHub^[__3__](https://github.com/business-science/tidyquant)^. The tidyquant website^[__4__](https://business-science.github.io/tidyquant/)^ is another good source of information.  
 
+# Stock Analysis
+###Initialize the R Environment
+
+```{r message=FALSE, warning=FALSE}
+
+# Get tidyquant - Loads tidyquant, tidyverse, lubridate, xts, quantmod, TTR, et al.
+if (!require("tidyquant")) {
+  
+  install.packages("tidyquant")
+  
+  library(tidyquant)
+}
+
+```  
+
+### Stock Indexes
+
+```{r  message=FALSE, warning=FALSE, cache=TRUE}
+
+tq_index_options()
+
+``` 
+
+#### Example: DOW 30 Symbols
+
+```{r  message=FALSE, warning=FALSE, cache=TRUE}
+
+tq_index("DOW")
+
+``` 
+
+### Stock Exchanges
+
+```{r  message=FALSE, warning=FALSE, cache=TRUE}
+
+tq_exchange_options()
+
+``` 
+
+#### Example: NASDAQ Symbols
+
+```{r  message=FALSE, warning=FALSE, cache=TRUE}
+
+tq_exchange("NASDAQ")
+
+```  
+
+### Economic Data - FRED - St. Louis Fed
+Download, graph, and track 508,000 US and international time series from 86 sources.^[__5__](https://fred.stlouisfed.org/categories)^  
+
+#### Example: West Texas Intermediate (WTI)
+```{r message=FALSE, warning=FALSE, cache=TRUE}
+
+wti_price_usd <- tq_get("DCOILWTICO", get = "economic.data")
+
+wti_price_usd %>%
+  ggplot(aes(x = date, y = price)) +
+  geom_line(color = palette_light()[[1]]) + 
+  scale_y_continuous(labels = scales::dollar) +
+  labs(title = "WTI", 
+       subtitle = "West Texas Intermediate", 
+       y = "Price", x = "") + 
+  theme_tq()
+
+```  
+
+#### Example: Effective Federal Funds (FEDFUNDS)
+```{r message=FALSE, warning=FALSE, cache=TRUE}
+
+fed_funds <- tq_get("FEDFUNDS", get = "economic.data")
+
+fed_funds %>%
+  ggplot(aes(x = date, y = price/100)) +
+  geom_line(color = palette_light()[[1]]) +
+  scale_y_continuous(labels = scales::percent) +
+  labs(title = "FEDFUNDS", 
+       subtitle = "Effective Federal Funds", 
+       y = "Rate", x = "") + 
+  theme_tq()
+
+```  
+
+#### Example: Smoothed U.S. Recession Probabilities (RECPROUSM156N)
+```{r message=FALSE, warning=FALSE, cache=TRUE}
+
+recession_probabilities <- tq_get("RECPROUSM156N", get = "economic.data", from = "1967-06-01")
+
+recession_probabilities %>%
+  filter(date > as.Date("1999-01-01")) %>%
+  ggplot(aes(x = date, y = price/100)) +
+  geom_line(color = palette_light()[[1]]) +
+  scale_y_continuous(labels = scales::percent) +
+  labs(title = "RECPROUSM156N", 
+       subtitle = "Smoothed U.S. Recession Probabilities", 
+       y = "Recession Probability", x = "") + 
+  theme_tq()
+
+```  
+
+### Quantitative Data
+
+```{r  message=FALSE, warning=FALSE, cache=TRUE}
+
+tq_get_options()
+
+``` 
+
+#### Example: AAPL - Financials - Annual
+
+```{r  message=FALSE, warning=FALSE, cache=TRUE}
+
+aapl_financials <- tq_get("AAPL", get = "financials")
+
+aapl_financials %>%
+  filter(type == "IS") %>%
+  select(annual) %>%
+  unnest(annual) %>% 
+  spread(key = date, value = value)
+
+``` 
+
+#### Example: AAPL - Key Ratios
+
+```{r  message=FALSE, warning=FALSE, cache=TRUE}
+
+aapl_key_ratios <- tq_get("AAPL", get = "key.ratios")
+
+aapl_key_ratios$section
+
+``` 
+
+#### Example: AAPL - Valuation Ratios - Profitability
+
+```{r  message=FALSE, warning=FALSE, cache=TRUE}
+
+aapl_key_ratios %>%
+  filter(section == "Profitability") %>%
+  unnest() %>%
+  select(c(category,date,value)) %>% 
+  spread(key = date, value = value)
+
+``` 
+
+#### Example: AAPL - Valuation Ratios - Valuation Ratios
+
+```{r  message=FALSE, warning=FALSE, cache=TRUE}
+
+aapl_key_ratios %>%
+  filter(section == "Valuation Ratios") %>%
+  unnest() %>%
+  ggplot(aes(x = date, y = value)) + 
+  geom_line(aes(col = forcats::fct_reorder2(category, date, value)),
+            size = 1) +
+  labs(title = "10-Year Historical Valuation Ratios for AAPL", x = "", 
+       y = "", col = "") +
+  theme_tq() +
+  scale_color_tq()
+
+```   
+
+### Download Historical Data for Dow 30 Stocks
+Use tidyquant to pull down 20 years of daily historical data and save to CSV files.  
+
+```{r  message=FALSE, warning=FALSE, cache=TRUE}
+
+data_dir <- "C:\\R-Projects\\StockData\\"
+
+download.data <- function(symbol) {
+  
+  start <- as.Date("1998-01-01")
+  
+  end <- as.Date("2017-12-31")
+  
+  stock_data <- tq_get(symbol, get  = "stock.prices", from = start, to = end)
+  
+  file_name <- paste(data_dir, "Dow30_Daily_", symbol, ".csv", 
+                     sep = "", collapse = NULL)
+  
+  write.csv(stock_data, file = file_name)
+}
+
+symbols <- tq_index("DOW")$symbol
+
+start_time <- proc.time()
+
+for (i in 1:length(symbols)) { 
+  
+  download.data(symbols[i])
+}
+
+elapsed_time <- (proc.time() - start_time)["elapsed"]
+
+write.table(paste("Downloaded daily historical data for Dow 30 stocks in",
+                  format(elapsed_time,digits=2,nsmall=2),"seconds."), 
+            row.names = FALSE, col.names = FALSE, quote = FALSE)
+
+```  
+![Generated CSV Files](csv_files.png)
+
+# Analysis Example: Apple (AAPL)
+### Load Daily Historical Data
+
+```{r message=FALSE, warning=FALSE, cache=TRUE}
+
+start <- as_date("2016-01-01")
+
+end <- as_date("2018-03-10")
+
+AAPL <- tq_get("AAPL", get = "stock.prices", from = start, to = end)
+
+```  
+
+### Closing Price with Linear Trendline
+
+```{r}
+
+AAPL %>%
+  ggplot(aes(x = date, y = adjusted)) +
+  geom_line(color = palette_light()[[1]]) +
+  scale_y_continuous(labels = scales::dollar) +
+  geom_smooth(method = "lm") +
+  labs(title = "AAPL", 
+       subtitle = "Continuous Scale with Linear Trendline", 
+       y = "Closing Price", x = "") + 
+  theme_tq()
+
+```  
+
+### Closing Price with Simple Moving Averages
+
+```{r message=FALSE, warning=FALSE}
+
+img   <- png::readPNG("tidyquant.png")  
+
+g_pic <- grid::rasterGrob(img, interpolate=TRUE)
+
+AAPL %>%
+  ggplot(aes(x = date, y = adjusted)) +
+  geom_line(color = palette_light()[[1]]) +
+  scale_y_continuous(labels = scales::dollar) +
+  geom_ma(ma_fun = SMA, n = 14, color = "red", size = 1, linetype = 5) +
+  geom_ma(ma_fun = SMA, n = 50, color = "green", size = 1, linetype = 1) +
+  labs(title = "AAPL", 
+       subtitle = "Continuous Scale with Simple Moving Averages (14 & 50)", 
+       y = "Closing Price", x = "") +
+  theme_tq() +
+  annotation_custom(g_pic, 
+                    xmin = "2016-01-01" %>% ymd() %>% as.numeric(), 
+                    xmax = "2016-07-01" %>% ymd() %>% as.numeric(), 
+                    ymin = 141, ymax = 179)
+
+```  
+
+### Candlestick Chart  
+
+```{r message=FALSE, warning=FALSE}
+
+start <- end - weeks(6)
+
+AAPL %>%
+  ggplot(aes(x = ,date, y = close)) +
+  geom_candlestick(aes(open = open, high = high, low = low, close = close),
+                   color_up = "darkgreen", color_down = "darkred", 
+                   fill_up  = "darkgreen", fill_down  = "darkred") +
+  labs(title = "AAPL", 
+       subtitle = paste("Daily",start,"thru",end),
+       y = "Closing Price", x = "") + 
+  coord_x_date(xlim = c(start, end),
+               ylim = c(150, 180)) + 
+  theme_tq() +
+  scale_y_continuous(labels = scales::dollar)
+
+```  
+
+### Bollinger Bands
+
+```{r message=FALSE, warning=FALSE}
+
+AAPL %>%
+  ggplot(aes(x = date, y = close)) +
+  geom_bbands(aes(high = high, low = low, close = close),
+              ma_fun = SMA, n = 20, sd = 2, size = 1) + 
+  labs(title = "AAPL",
+       subtitle = "Bollinger Bands - quickly visualize volatility",
+       x = "", y = "Closing Price") + 
+  theme_tq() +
+  scale_y_continuous(labels = scales::dollar)
+
+```  
+
+# Analysis Example: Multiple Stocks
+### FANG (FB, AMZN, NFLX, GOOG)
+### Load Daily Historical Data
+
+```{r cache=TRUE}
+
+data(FANG)
+
+```  
+
+### Compare Multiple Stocks
+
+```{r message=FALSE, warning=FALSE}
+
+end2 <- as_date("2016-12-01")
+
+start2 <- end2 - weeks(6)
+
+FANG %>% 
+  filter(date >= start2 - days(2 * 15)) %>%
+  ggplot(aes(x = date, y = close, group = symbol)) +
+  geom_candlestick(aes(open = open, high = high, low = low, close = close)) +
+  geom_ma(ma_fun = SMA, n = 15, color = "darkblue", size = 1) +
+  labs(title = "FANG", 
+       subtitle = "Candlestick with Mulitple Stocks",
+       y = "Closing Price", x = "") + 
+  coord_x_date(xlim = c(start2, end2)) +
+  facet_wrap(~ symbol, ncol = 2, scale = "free_y") +
+  theme_tq() +
+  scale_y_continuous(labels = scales::dollar)
+
+```  
+
+# Interactive Candlestick Chart
+#### Example: Using dygraphs^[__6__](https://rstudio.github.io/dygraphs/)^ for R package  
+```{r message=FALSE, warning=FALSE}
+
+# Get dygraphs 
+if (!require("dygraphs")) {
+  
+  install.packages("dygraphs")
+  
+  library(dygraphs)
+}
+
+data(sample_matrix)
+
+m <- tail(sample_matrix, n = 32)
+
+dygraph(m) %>% dyCandlestick() %>% dyRangeSelector()
+
+```
+ 
 # References
-__1__ [tidyquant: Tidy Quantitative Financial Analysis](https://cran.r-project.org/package=tidyquant)  
-__2__ [Introduction to tidyquant by Matt Dancho](https://cran.r-project.org/web/packages/tidyquant/vignettes/TQ00-introduction-to-tidyquant.html)  
+__1__ [tidyquant: Tidy Quantitative Financial Analysis (website)](https://cran.r-project.org/package=tidyquant)  
+__2__ [Introduction to tidyquant by Matt Dancho (website)](https://cran.r-project.org/web/packages/tidyquant/vignettes/TQ00-introduction-to-tidyquant.html)  
 __3__ [GitHub (source code)](https://github.com/business-science/tidyquant)  
 __4__ [tidyquant (website)](https://business-science.github.io/tidyquant/)  
+__5__ [FRED - Economic Research - Federal Reserve Bank of St. Louis (website)](https://fred.stlouisfed.org/categories)  
+__6__ [dygraphs for R (website)](https://rstudio.github.io/dygraphs/)
